@@ -9,9 +9,7 @@
 #ifndef __PORTS_H__
 #define __PORTS_H__
 
-
-#include <Arduino.h>
-
+#include <BlynkEsp8266.h>
 
 #define VP_TEMP_0   V0
 #define VP_TEMP_1   V1
@@ -25,26 +23,12 @@
 #define VP_HUM_3    V8
 #define VP_HUM_4    V9
 
-
 typedef struct {
     uint8_t TempPin;
     uint8_t HumPin;
 } VirtDhtPin;
 
-
-VirtDhtPin VirtDhtPins[] = {
-    { VP_TEMP_0, VP_HUM_0 },
-    { VP_TEMP_1, VP_HUM_1 },
-    { VP_TEMP_2, VP_HUM_2 },
-    { VP_TEMP_3, VP_HUM_3 }
-};
-
-uint8_t VirtDsPins[] = {
-    VP_TEMP_0,
-    VP_TEMP_1,
-    VP_TEMP_2,
-    VP_TEMP_3
-};
-
+extern VirtDhtPin VirtDhtPins[];
+extern uint8_t VirtDsPins[];
 
 #endif

@@ -6,9 +6,6 @@
  * Written by Sergey Denisov aka LittleBuster (DenisovS21@gmail.com)
  */
 
-#define BLYNK_PRINT Serial
-#include <BlynkSimpleEsp8266.h>
-
 #include "ports.h"
 #include "common.h"
 #include "boards.h"
@@ -19,20 +16,6 @@
  */
 SimpleTimer MainTimer;
 SimpleTimer NarMonTimer;
-
-/*
- * APPLICATION VARIABLES
- */
- int8_t NarMonTemp = 0;
- int8_t NarMonHum = 0;
-
-/*
- * BLYNK CALLBACKS
- */
-BLYNK_CONNECTED()
-{
-    Blynk.syncAll();
-}
 
 /*
  * OTHER FUNCTIONS
@@ -46,29 +29,46 @@ void MainTimerCallback()
 {
     int8_t temp, hum;
 
-    for (uint8_t i = 0; i < DS_PINS_COUNT; i++) {
-        DsSensors[i]->requestTemperatures();
-        temp = DsSensors[i]->getTempC(DEFAULT_DS_ADDR);
+#ifdef SENSOR_TYPE_DALLAS
+    for (uint8_t i = 0; i < SENSORS_COUNT; i++) {
+        for (uint8_t j = 0; j < RETRIES_COUNT; j++) {
+            DsSensors[i]->requestTemperatures();
+            temp = DsSensors[i]->getTempCByIndex(DEFAULT_DS_ADDR);
+            if (temp != DS_ERROR_VALUE) {
+                break;
+            }
+        }
+
         Blynk.virtualWrite(VirtDsPins[i], temp);
-#ifndef NAROD_MON_DHT_SENSOR
+
+#ifdef NAROD_MON_ENABLED
         if (i == NAROD_MON_SENSOR) {
             NarMonTemp = temp;
         }
 #endif
     }
+#endif
 
+#ifdef SENSOR_TYPE_DHT
     for (uint8_t i = 0; i < DHT_PINS_COUNT; i++) {
-        temp = DhtSensors[i]->getTemperature();
-        hum = DhtSensors[i]->getHumidity();
+        for (uint8_t j = 0; j < RETRIES_COUNT; j++) {
+            temp = DhtSensors[i]->getTemperature();
+            hum = DhtSensors[i]->getHumidity();
+            if (hum > 1)
+                break;
+        }
+
         Blynk.virtualWrite(VirtDhtPins[i].TempPin, temp);
         Blynk.virtualWrite(VirtDhtPins[i].HumPin, hum);
-#ifdef NAROD_MON_DHT_SENSOR
+
+#ifdef NAROD_MON_ENABLED
         if (i == NAROD_MON_SENSOR) {
             NarMonTemp = temp;
             NarMonHum = hum;
         }
 #endif
     }
+#endif
 }
 
 /*
@@ -76,16 +76,19 @@ void MainTimerCallback()
  */
 void setup()
 {
-    Serial.begin(SERIAL_SPEED);
     Blynk.begin(DEVICE_KEY, WIFI_SSID, WIFI_PASSWD, SERVER_ADDR, SERVER_PORT);
 
-    for (uint8_t i = 0; i < DS_PINS_COUNT; i++) {
+    for (uint8_t i = 0; i < SENSORS_COUNT; i++) {
+#ifdef SENSOR_TYPE_DALLAS
         DsSensors[i]->begin();
+#endif
+
+#ifdef SENSOR_TYPE_DHT
+        DhtSensors[i]->setup(DhtPins[i], DHTesp::DHT22);
+#endif
     }
 
-    for (uint8_t i = 0; i < DHT_PINS_COUNT; i++) {
-        DhtSensors[i]->setup(DhtPins[i], DHTesp::DHT22);
-    }
+    pinMode(Led, OUTPUT);
 
     MainTimer.setInterval(MAIN_TMR_DELAY, MainTimerCallback);
 #ifdef NAROD_MON_ENABLED
@@ -96,6 +99,12 @@ void setup()
 void loop()
 {
     Blynk.run();
+
+    if (WiFi.status() == WL_CONNECTED) {
+        digitalWrite(Led, LOW);
+    } else {
+        digitalWrite(Led, HIGH);
+    }
 
     MainTimer.run();
 #ifdef NAROD_MON_ENABLED

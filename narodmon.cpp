@@ -10,6 +10,8 @@
 
 #include "narodmon.h"
 
+int8_t NarMonTemp = 0;
+int8_t NarMonHum = 0;
 
 static String GetDeviceID()
 {
@@ -30,7 +32,7 @@ bool SendToNarodmon(int8_t temp, int8_t hum)
 
     buf = "#" + GetDeviceID() + "\n";
     buf += "#TEMP#" + String(temp) + "\n";
-#ifdef NAROD_MON_DHT_SENSOR
+#ifdef SENSOR_TYPE_DHT
     buf += "#HUM#" + String(hum) + "\n";
 #endif
     buf += "##\n";
