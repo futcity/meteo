@@ -20,13 +20,17 @@
  extern int8_t NarMonHum;
 
 /**
- * @brief Send data to narodmon server
+ * @brief Update narmon temperature
  * 
- * @param temp Sending temperature
- * @param hum Sending humidity
+ * @param [in] temp Current temperature
+ */
+ void NarodmonSetTemp(int8_t temp);
+
+/**
+ * @brief Send data to narodmon server
  * 
  * @returns HTTP status
  */
-bool SendToNarodmon(int8_t temp, int8_t hum);
+bool SendToNarodmon();
 
 #endif

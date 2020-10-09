@@ -11,11 +11,10 @@
 #include "narodmon.h"
 
 int8_t NarMonTemp = 0;
-int8_t NarMonHum = 0;
 
 static String GetDeviceID()
 {
-    String id = "E";
+    String id = "ESP";
 
     for (auto c : WiFi.macAddress())
         if (c != ':')
@@ -25,16 +24,18 @@ static String GetDeviceID()
     return id;
 }
 
-bool SendToNarodmon(int8_t temp, int8_t hum)
+void NarodmonSetTemp(int8_t temp)
+{
+    NarMonTemp = temp;
+}
+
+bool SendToNarodmon()
 {
     WiFiClient  client;
     String      buf;
 
     buf = "#" + GetDeviceID() + "\n";
-    buf += "#TEMP#" + String(temp) + "\n";
-#ifdef SENSOR_TYPE_DHT
-    buf += "#HUM#" + String(hum) + "\n";
-#endif
+    buf += "#TEMP#" + String(NarMonTemp) + "\n";
     buf += "##\n";
 
     if (client.connect(NAROD_MON_IP, NAROD_MON_PORT)) {

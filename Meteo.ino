@@ -20,55 +20,41 @@ SimpleTimer NarMonTimer;
 /*
  * OTHER FUNCTIONS
  */
-void NarMonTimerCallback()
+static void ButtonRead()
 {
-    SendToNarodmon(NarMonTemp, NarMonHum);
+    if (digitalRead(Buttons[MAIN_BUTTON]) == LOW) {
+        ESP.reset();
+        delay(600);
+    }
 }
 
-void MainTimerCallback()
+static void NarMonTimerCallback()
 {
-    int8_t temp, hum;
+    SendToNarodmon();
+}
 
-#ifdef SENSOR_TYPE_DALLAS
-    for (uint8_t i = 0; i < SENSORS_COUNT; i++) {
+static void MainTimerCallback()
+{
+    int8_t temp;
+
+    for (uint8_t i = 0; i < TempSensorsCount; i++) {
         for (uint8_t j = 0; j < RETRIES_COUNT; j++) {
-            DsSensors[i]->requestTemperatures();
-            temp = DsSensors[i]->getTempCByIndex(DEFAULT_DS_ADDR);
+            TempSensors[i]->requestTemperatures();
+            temp = TempSensors[i]->getTempCByIndex(DEFAULT_DS_ADDR);
             if (temp != DS_ERROR_VALUE) {
                 break;
             }
+            delay(100);
         }
 
         Blynk.virtualWrite(VirtDsPins[i], temp);
 
 #ifdef NAROD_MON_ENABLED
         if (i == NAROD_MON_SENSOR) {
-            NarMonTemp = temp;
+            NarodmonSetTemp(temp);
         }
 #endif
     }
-#endif
-
-#ifdef SENSOR_TYPE_DHT
-    for (uint8_t i = 0; i < DHT_PINS_COUNT; i++) {
-        for (uint8_t j = 0; j < RETRIES_COUNT; j++) {
-            temp = DhtSensors[i]->getTemperature();
-            hum = DhtSensors[i]->getHumidity();
-            if (hum > 1)
-                break;
-        }
-
-        Blynk.virtualWrite(VirtDhtPins[i].TempPin, temp);
-        Blynk.virtualWrite(VirtDhtPins[i].HumPin, hum);
-
-#ifdef NAROD_MON_ENABLED
-        if (i == NAROD_MON_SENSOR) {
-            NarMonTemp = temp;
-            NarMonHum = hum;
-        }
-#endif
-    }
-#endif
 }
 
 /*
@@ -76,20 +62,8 @@ void MainTimerCallback()
  */
 void setup()
 {
+    BoardInit();
     Blynk.begin(DEVICE_KEY, WIFI_SSID, WIFI_PASSWD, SERVER_ADDR, SERVER_PORT);
-
-    for (uint8_t i = 0; i < SENSORS_COUNT; i++) {
-#ifdef SENSOR_TYPE_DALLAS
-        DsSensors[i]->begin();
-#endif
-
-#ifdef SENSOR_TYPE_DHT
-        DhtSensors[i]->setup(DhtPins[i], DHTesp::DHT22);
-#endif
-    }
-
-    pinMode(Led, OUTPUT);
-
     MainTimer.setInterval(MAIN_TMR_DELAY, MainTimerCallback);
 #ifdef NAROD_MON_ENABLED
     NarMonTimer.setInterval(NARMON_TMR_DELAY, NarMonTimerCallback);
@@ -101,10 +75,12 @@ void loop()
     Blynk.run();
 
     if (WiFi.status() == WL_CONNECTED) {
-        digitalWrite(Led, LOW);
+        digitalWrite(Leds[STATUS_LED], HIGH);
     } else {
-        digitalWrite(Led, HIGH);
+        digitalWrite(Leds[STATUS_LED], LOW);
     }
+
+    ButtonRead();
 
     MainTimer.run();
 #ifdef NAROD_MON_ENABLED

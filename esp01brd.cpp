@@ -8,13 +8,13 @@
 
 #include "boards.h"
 
-#ifdef BOARD_SONOFF_R2
+#ifdef BOARD_ESP_01
 
-#define BUTTON_MAIN_PIN     0
-#define LED_STATUS_PIN      13
+#define BUTTON_MAIN_PIN     3
+#define LED_STATUS_PIN      1
 
-#define MAIN_SENSOR_PIN     3
-#define EXT_SENSOR_PIN      1
+#define MAIN_SENSOR_PIN     2
+#define EXT_SENSOR_PIN      0
 
 OneWire Ow(MAIN_SENSOR_PIN);
 OneWire Ow2(EXT_SENSOR_PIN);

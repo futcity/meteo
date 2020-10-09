@@ -6,32 +6,41 @@
  * Written by Sergey Denisov aka LittleBuster (DenisovS21@gmail.com)
  */
 
-#ifndef __BOARD_H__
-#define __BOARD_H__
+#ifndef __BOARDS_H__
+#define __BOARDS_H__
 
-#include <DHTesp.h>
+#include <Arduino.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+#define ARRAY_ITEMS_COUNT(_array) \
+        (sizeof (_array) / sizeof (*(_array)))
+
 //#define BOARD_NODEMCU_V1
-//#define BOARD_ESP_01
-#define BOARD_SONOFF_R2
-//#define BOARD_SONOFF_V3
+//#define BOARD_SONOFF_R2
+#define BOARD_ESP_01
 
-//#define SENSOR_TYPE_DHT
-#define SENSOR_TYPE_DALLAS
+typedef enum {
+    STATUS_LED
+} LedType;
 
-#define SENSORS_COUNT  3
+typedef enum {
+    MAIN_BUTTON
+} ButtonType;
 
-#ifdef SENSOR_TYPE_DHT
-extern uint8_t DhtPins[];
-extern DHTesp *DhtSensors[];
-#endif
+typedef enum {
+    MAIN_SENSOR,
+    EXT_SENSOR
+} TempSensorType;
 
-#ifdef SENSOR_TYPE_DALLAS
-extern DallasTemperature *DsSensors[];
-#endif
+extern uint8_t ButtonsCount;
+extern uint8_t LedsCount;
+extern uint8_t TempSensorsCount;
 
-extern uint8_t Led;
+extern uint8_t Leds[];
+extern uint8_t Buttons[];
+extern DallasTemperature *TempSensors[];
+
+void BoardInit();
 
 #endif
